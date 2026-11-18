@@ -1,0 +1,37 @@
+import React, { useState } from 'react';
+import web3, { getContract } from '../utils/web3';
+
+const CONTRACT_ADDRESS = "0xYOUR_CONTRACT_ADDRESS";
+
+export default function DoctorDashboard() {
+  const [account, setAccount] = useState(null);
+  const [recordId, setRecordId] = useState('');
+  const [record, setRecord] = useState(null);
+
+  async function connectWallet() {
+    const accounts = await web3.eth.requestAccounts();
+    setAccount(accounts[0]);
+  }
+
+  async function viewRecord() {
+    const contract = getContract(CONTRACT_ADDRESS);
+    const data = await contract.methods.getRecord(recordId).call();
+    setRecord(data);
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Doctor Dashboard</h2>
+      <button onClick={connectWallet}>Connect Wallet</button>
+      <input placeholder="Enter Record ID" onChange={(e) => setRecordId(e.target.value)} />
+      <button onClick={viewRecord}>View</button>
+      {record && (
+        <div>
+          <p>Owner: {record.owner}</p>
+          <p>IPFS Hash: {record.ipfsHash}</p>
+          <a href={`https://ipfs.io/ipfs/${record.ipfsHash}`} target="_blank" rel="noreferrer">Open Record</a>
+        </div>
+      )}
+    </div>
+  );
+}

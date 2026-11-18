@@ -1,0 +1,47 @@
+import React, { useState } from 'react';
+import web3, { getContract } from '../utils/web3';
+import axios from 'axios';
+
+const CONTRACT_ADDRESS = "0xYOUR_CONTRACT_ADDRESS";
+
+export default function PatientDashboard() {
+  const [file, setFile] = useState(null);
+  const [desc, setDesc] = useState('');
+  const [account, setAccount] = useState(null);
+
+  async function connectWallet() {
+    const accounts = await web3.eth.requestAccounts();
+    setAccount(accounts[0]);
+  }
+
+  async function uploadAndCreate(e) {
+    e.preventDefault();
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1];
+      const resp = await axios.post('http://localhost:4000/api/records/upload', {
+        walletAddress: account,
+        fileBase64: base64,
+        filename: file.name,
+        description: desc
+      });
+      const ipfsHash = resp.data.ipfsHash;
+      const contract = getContract(CONTRACT_ADDRESS);
+      await contract.methods.createRecord(ipfsHash, desc).send({ from: account });
+      alert("Record added to blockchain!");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Patient Dashboard</h2>
+      <button onClick={connectWallet}>Connect Wallet</button>
+      <form onSubmit={uploadAndCreate}>
+        <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+        <input type="text" placeholder="Description" value={desc} onChange={(e) => setDesc(e.target.value)} />
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+  );
+}

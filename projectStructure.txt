@@ -1,0 +1,28 @@
+medblock/
+ ├── contracts/
+ │    └── MedicalRecords.sol
+ ├── migrations/
+ │    └── 2_deploy_contracts.js
+ ├── backend/
+ │    ├── index.js
+ │    ├── web3.js
+ │    ├── package.json
+ │    ├── .env.example
+ │    ├── models/
+ │    │    ├── User.js
+ │    │    └── Record.js
+ │    └── abi/
+ │         └── MedicalRecords.json   (paste ABI from Truffle)
+ ├── frontend/
+ │    ├── package.json
+ │    └── src/
+ │         ├── App.js
+ │         ├── pages/
+ │         │    ├── Home.jsx
+ │         │    ├── PatientDashboard.jsx
+ │         │    └── DoctorDashboard.jsx
+ │         └── utils/
+ │              └── web3.js
+ ├── truffle-config.js
+ ├── README.md
+ └── .gitignore

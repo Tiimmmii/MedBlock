@@ -1,0 +1,53 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+require('dotenv').config();
+const { web3, contract } = require('./web3');
+const User = require('./models/User');
+const Record = require('./models/Record');
+const ipfsClient = require('ipfs-http-client');
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());  -
+
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error(err));
+
+// IPFS client
+const ipfs = ipfsClient.create({ url: 'https://ipfs.infura.io:5001/api/v0' });
+
+// Register user
+app.post('/api/register', async (req, res) => {
+  try {
+    const { name, role, walletAddress, email } = req.body;
+    let user = await User.findOne({ walletAddress });
+    if (user) return res.status(400).json({ message: 'Already registered' });
+    user = new User({ name, role, walletAddress, email });
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upload file to IPFS
+app.post('/api/records/upload', async (req, res) => {
+  try {
+    const { walletAddress, fileBase64, filename, description } = req.body;
+    const buffer = Buffer.from(fileBase64, 'base64');
+    const ipfsResult = await ipfs.add({ path: filename, content: buffer });
+    const ipfsHash = ipfsResult.cid.toString();
+    const rec = new Record({ ownerWallet: walletAddress, ipfsHash, description });
+    await rec.save();
+    res.json({ message: 'Uploaded to IPFS', ipfsHash, localRecord: rec });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));

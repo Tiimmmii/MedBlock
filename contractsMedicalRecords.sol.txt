@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract MedicalRecords {
+    struct Record {
+        uint256 id;
+        address owner;
+        string ipfsHash;
+        string description;
+        uint256 timestamp;
+    }
+
+    uint256 public nextRecordId = 1;
+    mapping(uint256 => Record) public records;
+    mapping(uint256 => mapping(address => bool)) public accessAllowed;
+
+    event RecordCreated(uint256 indexed id, address indexed owner, string ipfsHash);
+    event AccessGranted(uint256 indexed id, address indexed grantee);
+    event AccessRevoked(uint256 indexed id, address indexed grantee);
+
+    function createRecord(string calldata ipfsHash, string calldata description) external returns (uint256) {
+        uint256 recordId = nextRecordId++;
+        records[recordId] = Record(recordId, msg.sender, ipfsHash, description, block.timestamp);
+        accessAllowed[recordId][msg.sender] = true;
+        emit RecordCreated(recordId, msg.sender, ipfsHash);
+        return recordId;
+    }
+
+    function grantAccess(uint256 recordId, address grantee) external {
+        require(msg.sender == records[recordId].owner, "Only owner can grant");
+        accessAllowed[recordId][grantee] = true;
+        emit AccessGranted(recordId, grantee);
+    }
+
+    function revokeAccess(uint256 recordId, address grantee) external {
+        require(msg.sender == records[recordId].owner, "Only owner can revoke");
+        accessAllowed[recordId][grantee] = false;
+        emit AccessRevoked(recordId, grantee);
+    }
+
+    function hasAccess(uint256 recordId, address user) public view returns (bool) {
+        return accessAllowed[recordId][user];
+    }
+
+    function getRecord(uint256 recordId) public view returns (Record memory) {
+        return records[recordId];
+    }
+}

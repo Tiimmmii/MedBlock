@@ -1,0 +1,12 @@
+import Web3 from 'web3';
+import contractABI from './abi/MedicalRecords.json';
+
+let web3;
+if (window.ethereum) {
+  web3 = new Web3(window.ethereum);
+} else {
+  web3 = new Web3('http://127.0.0.1:7545');
+}
+
+export const getContract = (address) => new web3.eth.Contract(contractABI, address);
+export default web3;
